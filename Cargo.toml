@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 walkdir = "2.4.0"
 image = "0.24.7"
+indicatif = "0.17.7"
+serde = { version = "1.0.188", features = ["derive"]}
+toml = "0.8.2"

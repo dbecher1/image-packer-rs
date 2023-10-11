@@ -1,6 +1,6 @@
 use Packer2::packer::*;
 
 fn main() {
-    let p = Packer::new();
-    p.read_files();
+    let mut p = Packer::new(None);
+    p.read_files().unwrap();
 }
