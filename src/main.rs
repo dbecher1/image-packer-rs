@@ -1,6 +1,54 @@
-use Packer2::packer::*;
+
+use clap::{Parser};
+use image_packer::packer::ImagePacker;
+
 
 fn main() {
-    let mut p = Packer::new(None);
-    p.read_files().unwrap();
+    let args = Cli::parse();
+    // println!("{:?}", args);
+
+    let mut image_packer = ImagePacker::new(None);
+
+    if let Some(f) = args.file_name {
+        image_packer.set_file_save_name(f);
+    }
+    if let Some(dir) = args.dir_name {
+        image_packer.set_directory(dir);
+    }
+    if !args.extensions.is_empty() {
+        for e in args.extensions {
+            if e == "png" {
+                continue;
+            }
+            image_packer.add_supported_format(e);
+        }
+    }
+    if args.border > 0 {
+        image_packer.set_border(args.border);
+    }
+    if args.verbose {
+        image_packer.set_print_output(true);
+    }
+    image_packer.read_files()
+        .expect("Failed to read files, something went wrong!");
 }
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    #[arg(short, long)]
+    file_name: Option<String>,
+
+    #[arg(short, long, default_value_t = false)]
+    verbose: bool,
+
+    #[arg(short, long, default_value_t = 0)]
+    border: u8,
+
+    #[arg(short, long)]
+    dir_name: Option<String>,
+
+    #[arg(short, long)]
+    extensions: Vec<String>,
+}
+

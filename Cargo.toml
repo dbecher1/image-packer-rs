@@ -1,7 +1,8 @@
 [package]
-name = "Packer2"
-version = "0.1.0"
+name = "image-packer"
+version = "0.3.0"
 edition = "2021"
+authors = ["Daniel Becher"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -9,6 +10,4 @@ edition = "2021"
 walkdir = "2.4.0"
 image = "0.24.7"
 indicatif = "0.17.7"
-serde = { version = "1.0.188", features = ["derive"]}
-toml = "0.8.2"
-clap = "4.4.7"
+clap = {version = "4.4.7", features = ["derive"]}
