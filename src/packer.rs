@@ -32,11 +32,13 @@ pub struct Packer {
     load_tiled_map_data: bool, // FUTURE IMPL
     save_image_to_file: bool,
     store_image_data: bool,
+    read_animations: bool,
     print_output: bool,
     border: u32,
     source_rects: HashMap<String, Rect>,
     num_images: u32,
     animation_data: HashMap<String, Animation>,
+    save_name: String,
 }
 // structure for animation data will be: PARENT-ANIMATION NAME maps to animation frames
 // ie Player-_Attack maps to the data for _Attack
@@ -67,11 +69,13 @@ impl Packer {
             load_tiled_map_data: false,
             save_image_to_file: true,
             store_image_data: true,
+            read_animations: false,
             print_output: true,
             border: 0,
             source_rects: HashMap::with_capacity(count as usize),
             num_images: count,
             animation_data: HashMap::new(),
+            save_name: "packed_image.png".parse().unwrap(),
         }
     }
 
@@ -97,6 +101,10 @@ impl Packer {
 
     pub fn set_print_output(&mut self, b:bool) {
         self.print_output = b;
+    }
+
+    pub fn set_file_save_name(&mut self, f_name: &str) {
+        self.save_name = f_name.to_string();
     }
 
     fn read_animation_data<'a>(&self) -> HashMap<String, HashMap<String, AnimationData>> {
@@ -136,7 +144,7 @@ impl Packer {
             }
         }
         println!("Animation data successfully read!");
-        return map
+        return map;
     }
 
     pub fn read_files<'a>(&mut self) -> Result<(), ()> {
@@ -220,31 +228,35 @@ impl Packer {
                     x = 0;
                     break;
                 }
+
                 // animation stuff
-                let find_parent = animation_to_parent.get(&i.name);
-                if let Some(parent) = find_parent {
-                    if let Some(name_to_data) = animation_data.get(parent) {
-                        if let Some(frame_data) = name_to_data.get(&i.name) {
-                            let speed = frame_data.speed;
-                            let columns = frame_data.columns;
-                            let rows = frame_data.rows;
-                            let frame_width = w / columns;
-                            let frame_height = h / rows;
+                if !self.read_animations
+                {
+                    let find_parent = animation_to_parent.get(&i.name);
+                    if let Some(parent) = find_parent {
+                        if let Some(name_to_data) = animation_data.get(parent) {
+                            if let Some(frame_data) = name_to_data.get(&i.name) {
+                                let speed = frame_data.speed;
+                                let columns = frame_data.columns;
+                                let rows = frame_data.rows;
+                                let frame_width = w / columns;
+                                let frame_height = h / rows;
 
-                            let mut data: Vec<Rect> = vec![];
+                                let mut data: Vec<Rect> = vec![];
 
-                            for y_ in (y..rows).step_by(frame_height as usize) {
-                                for x_ in (x..columns).step_by(frame_width as usize) {
-                                    data.push(Rect {
-                                        x: x_,
-                                        y: y_,
-                                        w: frame_width,
-                                        h: frame_height,
-                                    });
+                                for y_ in (y..rows).step_by(frame_height as usize) {
+                                    for x_ in (x..columns).step_by(frame_width as usize) {
+                                        data.push(Rect {
+                                            x: x_,
+                                            y: y_,
+                                            w: frame_width,
+                                            h: frame_height,
+                                        });
+                                    }
                                 }
+                                let key = parent.to_string() + "-" + &i.name;
+                                self.animation_data.insert(key, Animation { data, speed });
                             }
-                            let key = parent.to_string() + "-" + &i.name;
-                            self.animation_data.insert(key, Animation { data, speed});
                         }
                     }
                 }
