@@ -18,6 +18,8 @@
 // schema for the .toml to follow
 // and this will create a new association in our animations map
 
+// goal for 12/26/23 revision: re-add inclusion of rect cache
+
 use walkdir::WalkDir;
 use image::{GenericImage, GenericImageView, RgbaImage};
 use std::{collections::HashMap, env};
@@ -85,7 +87,7 @@ impl ImagePacker {
         self.save_name = f_name;
     }
 
-    pub fn read_files(&mut self) -> Result<(), ()> {
+    pub fn read_files(&mut self) -> Result<(), &str> {
 
         let mut images = vec![];
         let bar = ProgressBar::new(self.num_images as u64);
@@ -181,10 +183,16 @@ impl ImagePacker {
                 break;
             }
         }
+
+        if boundary == 0 || final_height == 0 {
+            return Err("Invalid image dimensions! Image not saved.");
+        }
+
         let mut final_img: RgbaImage = RgbaImage::new(boundary, final_height);
 
         for i in images {
             let r = self.source_rects.get(&i.name).unwrap().clone();
+            println!("{:?}", &r);
             let img = &i.image;
             final_img.copy_from(img, r.x, r.y).unwrap();
         }
@@ -195,12 +203,10 @@ impl ImagePacker {
         let mut path_ = env::current_exe().unwrap();
         path_.pop();
         path_ = path_.join(self.save_name.to_string());
-        final_img.save(path_).expect("Error saving image!");
 
-        if self.print_output {
-            println!("Done!");
+        return match final_img.save(path_) {
+            Ok(_) => Ok(()),
+            Err(_) => Err("Could not save image!")
         }
-
-        Ok(())
     }
 }
