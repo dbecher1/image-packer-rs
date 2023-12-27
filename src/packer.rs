@@ -49,12 +49,11 @@ impl ImagePacker {
         let mut path_ = env::current_dir().unwrap();
         path_ = path_.join(name.clone());
 
-        for entry in WalkDir::new(path_)
+        for _ in WalkDir::new(path_)
             .into_iter()
-            .filter_map(|e| e.ok()) {
-            if entry.path().is_file() {
-                count += 1;
-            }
+            .filter_map(|e| e.ok())
+            .filter(|e| e.path().is_file()) {
+            count += 1;
         }
 
         Self {
@@ -103,7 +102,7 @@ impl ImagePacker {
         let mut path_ = env::current_dir().unwrap();
 
         path_ = path_.join(self.dir_name.clone());
-        println!("{:?}", &path_);
+        // println!("{:?}", &path_);
 
         for entry in WalkDir::new(&path_)
             .into_iter()
