@@ -22,10 +22,9 @@
 
 use walkdir::WalkDir;
 use image::{GenericImage, GenericImageView, RgbaImage};
-use std::{collections::HashMap, env};
+use std::{collections::HashMap, env, fs};
 use indicatif::ProgressBar;
 use crate::definitions::*;
-use toml::to_string_pretty;
 
 pub struct ImagePacker {
     pub cli: bool,
@@ -47,8 +46,6 @@ impl ImagePacker {
             None => name = IMAGE_DIR_NAME.to_string(),
             Some(_) => name = dir.unwrap(),
         };
-        //let mut path_ = env::current_exe().unwrap();
-        //let _ = path_.pop();
         let mut path_ = env::current_dir().unwrap();
         path_ = path_.join(name.clone());
 
@@ -64,7 +61,7 @@ impl ImagePacker {
             cli: false,
             dir_name: name,
             supported_formats: vec!["png".to_string()],
-            print_output: true,
+            print_output: false,
             border: 0,
             source_rects: HashMap::with_capacity(count as usize),
             num_images: count,
@@ -99,8 +96,6 @@ impl ImagePacker {
         if self.print_output {
             println!("Loading images: ");
         }
-        //let mut path_ = env::current_exe().unwrap();
-        // let _ = path_.pop();
         let mut path_ = env::current_dir().unwrap();
 
         path_ = path_.join(self.dir_name.clone());
@@ -126,10 +121,7 @@ impl ImagePacker {
                 let name_ = entry.path().with_extension("");
                 let file_name = name_.file_name().unwrap().to_string_lossy().to_string();
 
-                images.push(ImgWrapper{
-                    image: img.unwrap(),
-                    name: file_name,
-                });
+                images.push((file_name, img.unwrap()));
                 if self.print_output {
                     bar.inc(1);
                 }
@@ -139,8 +131,8 @@ impl ImagePacker {
             bar.finish();
             println!("\nSorting images...");
         }
-        images.sort_by(|a, b| b.image.dimensions().1.cmp(&a.image.dimensions().1));
         // sorted descending by height
+        images.sort_by(|a, b| b.1.dimensions().1.cmp(&a.1.dimensions().1));
 
         let mut x: u32 = 0;
         let mut y: u32 = 0;
@@ -152,8 +144,8 @@ impl ImagePacker {
             let mut success = true;
 
             for i in &images {
-                let w = i.image.dimensions().0;
-                let h = i.image.dimensions().1;
+                let w = i.1.dimensions().0;
+                let h = i.1.dimensions().1;
 
                 if (x + w ) > boundary {
                     if max_height == 0 {
@@ -181,8 +173,7 @@ impl ImagePacker {
                     w,
                     h,
                 };
-                let name = &i.name;
-                self.source_rects.insert(name.clone(), rect);
+                self.source_rects.insert(i.0.clone(), rect);
 
                 x += w + self.border;
 
@@ -201,27 +192,25 @@ impl ImagePacker {
         }
 
         let mut final_img: RgbaImage = RgbaImage::new(boundary, final_height);
-        let mut toml_test = Ok("".to_string());
 
         for i in images {
-            let r = self.source_rects.get(&i.name).unwrap().clone();
-            //println!("{:?}", &r);
-            //let img = i.image.as_rgba8().unwrap();
-            let img = &i.image;
-            toml_test = to_string_pretty(&r);
+            let r = self.source_rects.get(&i.0).unwrap().clone();
+            let img = &i.1;
             match final_img.copy_from(img, r.x, r.y) {
                 Err(_) => return Err("Attempted to copy invalid image data!"),
                 Ok(_) => {},
             }
         }
 
-        println!("{}", toml_test.unwrap());
+        match toml::to_string_pretty(&self.source_rects) {
+            Ok(toml_str) => fs::write("rect_data.toml", toml_str).expect("Error writing rect_data.toml!"),
+            Err(_) => {},
+        }
 
         if self.print_output {
             println!("Saving image...");
         }
-        //let mut path_ = env::current_exe().unwrap();
-        //path_.pop();
+
         let mut path_ = env::current_dir().unwrap();
         path_ = path_.join(self.save_name.to_string());
 

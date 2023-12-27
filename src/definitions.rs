@@ -1,5 +1,5 @@
-use image::DynamicImage;
-use serde::{Deserialize, Serialize};
+
+use serde::{Serialize};
 
 pub(crate) const IMAGE_DIR_NAME: &'static str = "images/";
 
@@ -9,10 +9,4 @@ pub struct Rect {
     pub y: u32,
     pub w: u32,
     pub h: u32,
-}
-
-#[derive(Serialize)]
-pub(crate) struct ImgWrapper {
-    pub(crate) image: DynamicImage,
-    pub(crate) name: String,
 }

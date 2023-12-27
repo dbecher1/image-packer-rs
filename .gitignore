@@ -2,3 +2,6 @@
 .*
 .idea/
 !.gitignore
+images/*
+packed_image.png
+rect_data.toml
