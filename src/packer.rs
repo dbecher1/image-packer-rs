@@ -25,8 +25,10 @@ use image::{GenericImage, GenericImageView, RgbaImage};
 use std::{collections::HashMap, env};
 use indicatif::ProgressBar;
 use crate::definitions::*;
+use toml::to_string_pretty;
 
 pub struct ImagePacker {
+    pub cli: bool,
     dir_name: String,
     supported_formats: Vec<String>,
     print_output: bool,
@@ -45,8 +47,9 @@ impl ImagePacker {
             None => name = IMAGE_DIR_NAME.to_string(),
             Some(_) => name = dir.unwrap(),
         };
-        let mut path_ = env::current_exe().unwrap();
-        let _ = path_.pop();
+        //let mut path_ = env::current_exe().unwrap();
+        //let _ = path_.pop();
+        let mut path_ = env::current_dir().unwrap();
         path_ = path_.join(name.clone());
 
         for entry in WalkDir::new(path_)
@@ -58,9 +61,10 @@ impl ImagePacker {
         }
 
         Self {
+            cli: false,
             dir_name: name,
             supported_formats: vec!["png".to_string()],
-            print_output: false,
+            print_output: true,
             border: 0,
             source_rects: HashMap::with_capacity(count as usize),
             num_images: count,
@@ -95,9 +99,12 @@ impl ImagePacker {
         if self.print_output {
             println!("Loading images: ");
         }
-        let mut path_ = env::current_exe().unwrap();
-        let _ = path_.pop();
+        //let mut path_ = env::current_exe().unwrap();
+        // let _ = path_.pop();
+        let mut path_ = env::current_dir().unwrap();
+
         path_ = path_.join(self.dir_name.clone());
+        println!("{:?}", &path_);
 
         for entry in WalkDir::new(&path_)
             .into_iter()
@@ -109,6 +116,11 @@ impl ImagePacker {
                 if let Err(e) = &img {
                     eprintln!("{}",e);
                     continue;
+                }
+                else {
+                    if self.print_output {
+                        println!("Loading {}", name_with_path);
+                    }
                 }
                 // I'm sorry for how ugly this is
                 let name_ = entry.path().with_extension("");
@@ -189,19 +201,28 @@ impl ImagePacker {
         }
 
         let mut final_img: RgbaImage = RgbaImage::new(boundary, final_height);
+        let mut toml_test = Ok("".to_string());
 
         for i in images {
             let r = self.source_rects.get(&i.name).unwrap().clone();
-            println!("{:?}", &r);
+            //println!("{:?}", &r);
+            //let img = i.image.as_rgba8().unwrap();
             let img = &i.image;
-            final_img.copy_from(img, r.x, r.y).unwrap();
+            toml_test = to_string_pretty(&r);
+            match final_img.copy_from(img, r.x, r.y) {
+                Err(_) => return Err("Attempted to copy invalid image data!"),
+                Ok(_) => {},
+            }
         }
+
+        println!("{}", toml_test.unwrap());
 
         if self.print_output {
             println!("Saving image...");
         }
-        let mut path_ = env::current_exe().unwrap();
-        path_.pop();
+        //let mut path_ = env::current_exe().unwrap();
+        //path_.pop();
+        let mut path_ = env::current_dir().unwrap();
         path_ = path_.join(self.save_name.to_string());
 
         return match final_img.save(path_) {

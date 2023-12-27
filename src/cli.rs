@@ -22,6 +22,8 @@ struct Cli {
 }
 
 pub fn cli_parse(image_packer: &mut ImagePacker) {
+    image_packer.cli = true;
+
     let args = Cli::parse();
 
     if let Some(f) = args.file_name {
