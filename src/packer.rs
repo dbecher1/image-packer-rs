@@ -88,6 +88,10 @@ impl ImagePacker {
         self.save_name = f_name;
     }
 
+    pub fn get_print_output(&self) -> bool {
+        self.print_output
+    }
+
     pub fn read_files(&mut self) -> Result<(), &str> {
 
         let mut images = vec![];

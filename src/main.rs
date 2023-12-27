@@ -13,7 +13,9 @@ fn main() {
 
     match image_packer.read_files() {
         Ok(_) => {
-            println!("Image successfully saved!");
+            if image_packer.get_print_output() {
+                println!("Image successfully saved!");
+            }
         }
         Err(msg) => {
             eprintln!("An error has occurred: {}", msg);
