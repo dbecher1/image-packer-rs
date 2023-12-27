@@ -49,12 +49,11 @@ impl ImagePacker {
         let mut path_ = env::current_dir().unwrap();
         path_ = path_.join(name.clone());
 
-        for _ in WalkDir::new(path_)
+        let _ = WalkDir::new(path_)
             .into_iter()
             .filter_map(|e| e.ok())
-            .filter(|e| e.path().is_file()) {
-            count += 1;
-        }
+            .filter(|e| e.path().is_file())
+            .for_each(|_| count += 1);
 
         Self {
             cli: false,
@@ -102,34 +101,32 @@ impl ImagePacker {
         let mut path_ = env::current_dir().unwrap();
 
         path_ = path_.join(self.dir_name.clone());
-        // println!("{:?}", &path_);
 
-        for entry in WalkDir::new(&path_)
+        let _ = WalkDir::new(&path_)
             .into_iter()
-            .filter_map(|e| e.ok()) {
-            if !entry.path().is_dir() {
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| !entry.path().is_dir())
+            .for_each(|entry| {
                 let name_with_path = entry.path().to_str().unwrap();
                 let img = image::open(name_with_path);
 
                 if let Err(e) = &img {
                     eprintln!("{}",e);
-                    continue;
                 }
                 else {
                     if self.print_output {
                         println!("Loading {}", name_with_path);
                     }
-                }
-                // I'm sorry for how ugly this is
-                let name_ = entry.path().with_extension("");
-                let file_name = name_.file_name().unwrap().to_string_lossy().to_string();
+                    let name_ = entry.path().with_extension("");
+                    let file_name = name_.file_name().unwrap().to_string_lossy().to_string();
 
-                images.push((file_name, img.unwrap()));
-                if self.print_output {
-                    bar.inc(1);
+                    images.push((file_name, img.unwrap()));
+                    if self.print_output {
+                        bar.inc(1);
+                    }
                 }
-            }
-        }
+            });
+
         if self.print_output {
             bar.finish();
             println!("\nSorting images...");
