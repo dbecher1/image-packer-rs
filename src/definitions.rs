@@ -1,7 +1,8 @@
 
 use serde::{Serialize};
 
-pub(crate) const IMAGE_DIR_NAME: &'static str = "images/";
+pub(crate) const IMAGE_DIR_NAME: &'static str = "packer/images/";
+pub(crate) const SAVE_DIR_NAME: &'static str = "packer/out/";
 
 #[derive(Debug, Serialize)]
 pub struct Rect {

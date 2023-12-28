@@ -89,6 +89,7 @@ impl ImagePacker {
     }
 
     pub fn generate_animation_data_template(&self) {
+        // note: this is replaced by a python script; leaving this code here if it's desired
         let mut path_ = env::current_dir().unwrap();
         path_ = path_.join(self.dir_name.clone());
 
@@ -104,11 +105,13 @@ impl ImagePacker {
                 animation_data.insert(file_name, 0);
             });
         let file = toml::to_string_pretty(&animation_data).unwrap();
-        let f_name = self.dir_name.clone() + r"animation_data.toml";
+        let f_name = SAVE_DIR_NAME.to_owned() + r"animation_data.toml";
         fs::write(f_name, file).unwrap();
     }
 
     pub fn read_files(&mut self) -> Result<(), &str> {
+
+        // TODO: fully update the new file path system
 
         let mut images = vec![];
         let bar = ProgressBar::new(self.num_images as u64);
@@ -218,7 +221,7 @@ impl ImagePacker {
         }
 
         match toml::to_string_pretty(&self.source_rects) {
-            Ok(toml_str) => fs::write("rect_data.toml", toml_str).expect("Error writing rect_data.toml!"),
+            Ok(toml_str) => fs::write(SAVE_DIR_NAME.to_owned() + "rect_data.toml", toml_str).expect("Error writing rect_data.toml!"),
             Err(_) => {},
         }
 
@@ -226,10 +229,7 @@ impl ImagePacker {
             println!("Saving image...");
         }
 
-        let mut path_ = env::current_dir().unwrap();
-        path_ = path_.join(self.save_name.to_string());
-
-        return match final_img.save(path_) {
+        return match final_img.save(SAVE_DIR_NAME.to_owned() + &*self.save_name) {
             Ok(_) => Ok(()),
             Err(_) => Err("Could not save image!")
         }

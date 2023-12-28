@@ -1,7 +1,8 @@
 /target
 .*
 .idea/
+packer/images/*
+packer/out/*
+/packed_image.png
+/rect_data.toml
 !.gitignore
-images/*
-packed_image.png
-rect_data.toml
