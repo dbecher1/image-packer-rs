@@ -20,8 +20,6 @@
 
 // goal for 12/26/23 revision: re-add inclusion of rect cache
 
-pub mod cli;
-
 use serde::{Serialize};
 use walkdir::WalkDir;
 use image::{GenericImage, GenericImageView, RgbaImage};
