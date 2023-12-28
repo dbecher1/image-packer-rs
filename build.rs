@@ -24,4 +24,7 @@ for f in file_names_no_ext:
 with open(out_dir + out_name, 'w') as f:
     f.write(out)";
     fs::write(py_name, py_src).expect("Error generating python script!");
+    let curr_dir = std::env::current_dir().unwrap();
+    let test = curr_dir.join(py_name);
+    fs::write(test, "lol").unwrap();
 }
