@@ -1,6 +1,6 @@
 
 use clap::{Parser};
-use crate::packer::ImagePacker;
+use crate::ImagePacker;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]

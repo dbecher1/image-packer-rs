@@ -1,5 +1,5 @@
 
-use image_packer::packer::ImagePacker;
+use image_packer::ImagePacker;
 
 #[cfg(feature = "cli")]
 use image_packer::cli::*;
@@ -11,7 +11,7 @@ fn main() {
     #[cfg(feature = "cli")]
     cli_parse(&mut image_packer);
 
-    image_packer.generate_animation_data_template();
+    // image_packer.generate_animation_data_template();
 
     match image_packer.read_files() {
         Ok(_) => {
