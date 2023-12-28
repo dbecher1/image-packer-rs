@@ -11,6 +11,8 @@ fn main() {
     #[cfg(feature = "cli")]
     cli_parse(&mut image_packer);
 
+    image_packer.generate_animation_data_template();
+
     match image_packer.read_files() {
         Ok(_) => {
             if image_packer.get_print_output() {

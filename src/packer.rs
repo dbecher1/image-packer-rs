@@ -39,8 +39,6 @@ pub struct ImagePacker {
 impl ImagePacker {
     pub fn new(dir: Option<String>) -> Self {
 
-        // to be a wee more memory efficient we'll crawl through and count how many images we have
-        let mut count: u32 = 0;
         let name: String;
         match dir {
             None => name = IMAGE_DIR_NAME.to_string(),
@@ -49,11 +47,11 @@ impl ImagePacker {
         let mut path_ = env::current_dir().unwrap();
         path_ = path_.join(name.clone());
 
-        let _ = WalkDir::new(path_)
+        let count = WalkDir::new(path_)
             .into_iter()
             .filter_map(|e| e.ok())
             .filter(|e| e.path().is_file())
-            .for_each(|_| count += 1);
+            .count();
 
         Self {
             cli: false,
@@ -61,8 +59,8 @@ impl ImagePacker {
             supported_formats: vec!["png".to_string()],
             print_output: false,
             border: 0,
-            source_rects: HashMap::with_capacity(count as usize),
-            num_images: count,
+            source_rects: HashMap::with_capacity(count),
+            num_images: count as u32,
             save_name: "packed_image.png".parse().unwrap(),
         }
     }
@@ -90,6 +88,26 @@ impl ImagePacker {
         self.print_output
     }
 
+    pub fn generate_animation_data_template(&self) {
+        let mut path_ = env::current_dir().unwrap();
+        path_ = path_.join(self.dir_name.clone());
+
+        let mut animation_data = HashMap::new();
+
+        let _ = WalkDir::new(&path_)
+            .into_iter()
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| entry.path().is_file())
+            .for_each(|entry| {
+                let name_ = entry.path().with_extension("");
+                let file_name = name_.file_name().unwrap().to_string_lossy().to_string();
+                animation_data.insert(file_name, 0);
+            });
+        let file = toml::to_string_pretty(&animation_data).unwrap();
+        let f_name = self.dir_name.clone() + r"animation_data.toml";
+        fs::write(f_name, file).unwrap();
+    }
+
     pub fn read_files(&mut self) -> Result<(), &str> {
 
         let mut images = vec![];
@@ -110,17 +128,14 @@ impl ImagePacker {
                 let name_with_path = entry.path().to_str().unwrap();
                 let img = image::open(name_with_path);
 
-                if let Err(e) = &img {
-                    eprintln!("{}",e);
-                }
-                else {
+                if let Ok(image) = img {
                     if self.print_output {
                         println!("Loading {}", name_with_path);
                     }
                     let name_ = entry.path().with_extension("");
                     let file_name = name_.file_name().unwrap().to_string_lossy().to_string();
 
-                    images.push((file_name, img.unwrap()));
+                    images.push((file_name, image));
                     if self.print_output {
                         bar.inc(1);
                     }
@@ -195,8 +210,8 @@ impl ImagePacker {
 
         for i in images {
             let r = self.source_rects.get(&i.0).unwrap().clone();
-            let img = &i.1;
-            match final_img.copy_from(img, r.x, r.y) {
+            let img = i.1;
+            match final_img.copy_from(&img, r.x, r.y) {
                 Err(_) => return Err("Attempted to copy invalid image data!"),
                 Ok(_) => {},
             }
